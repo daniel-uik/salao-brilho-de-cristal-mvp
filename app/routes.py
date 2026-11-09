@@ -70,3 +70,7 @@ def criar_agendamento():
         'agendamento_id': novo_agendamento.id,
         'link_whatsapp': link_whatsapp
     }), 201
+def gerar_link_whatsapp(telefone, nome, servico, data, hora):
+    import urllib.parse
+    texto = f'Ola {nome}, seu horario de {servico} no Salao Brilho de Cristal esta confirmado para {data} as {hora}.'
+    return f'https://wa.me/55{telefone}?text={urllib.parse.quote(texto)}'
