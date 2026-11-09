@@ -5,6 +5,22 @@ import urllib.parse
 
 main_bp = Blueprint('main', __name__)
 
+DURACOES_SERVICOS = {
+    'Corte': '30 min',
+    'Escova': '40 min',
+    'Manicure': '45 min',
+    'Luzes': '2h 30 min',
+    'Selagem': '2h 00 min'
+}
+
+def gerar_link_whatsapp(telefone, nome, servico, data, hora):
+    msg = (
+        f'Oi {nome}, tudo bem? Passando pra confirmar seu horário de {servico} '
+        f'amanhã ({data}) às {hora} aqui no Salão Brilho de Cristal! '
+        f'Se precisar remarcar, só me avisar por aqui. Até amanhã! - Maria'
+    )
+    return f'https://wa.me/55{telefone}?text={urllib.parse.quote(msg)}'
+
 @main_bp.route('/')
 def index():
     return redirect(url_for('main.login'))
@@ -26,13 +42,12 @@ def dashboard():
 def criar_agendamento():
     data = request.json
     nome = data.get('nome')
-    telefone = data.get('telefone')
+    telefone = ''.join(filter(str.isdigit, data.get('telefone', '')))
     data_atendimento = data.get('data_atendimento')
     horario = data.get('horario_inicio')
     servico = data.get('servico_nome')
     valor = float(data.get('valor_servico', 0.0))
 
-    # Validacao Anti-Overbooking
     existente = Agendamento.query.filter_by(
         data_atendimento=data_atendimento,
         horario_inicio=horario,
@@ -61,16 +76,10 @@ def criar_agendamento():
     db.session.add(novo_agendamento)
     db.session.commit()
 
-    # Link wa.me
-    msg = f'Olá {nome}, seu agendamento de {servico} no Salão Brilho de Cristal está confirmado para {data_atendimento} às {horario}.'
-    link_whatsapp = f'https://wa.me/55{telefone}?text={urllib.parse.quote(msg)}'
+    link_whatsapp = gerar_link_whatsapp(telefone, nome, servico, data_atendimento, horario)
 
     return jsonify({
         'sucesso': True,
         'agendamento_id': novo_agendamento.id,
         'link_whatsapp': link_whatsapp
     }), 201
-def gerar_link_whatsapp(telefone, nome, servico, data, hora):
-    import urllib.parse
-    texto = f'Ola {nome}, seu horario de {servico} no Salao Brilho de Cristal esta confirmado para {data} as {hora}.'
-    return f'https://wa.me/55{telefone}?text={urllib.parse.quote(texto)}'
