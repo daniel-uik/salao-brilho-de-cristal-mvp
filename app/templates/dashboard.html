@@ -1,0 +1,121 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grade Diária - Salão Brilho de Cristal</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  body { background: #f8fafc; color: #0f172a; padding-bottom: 80px; }
+  .top-nav { background: #1a2b5f; color: #ffffff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .brand { font-size: 17px; font-weight: 700; }
+  .date-bar { background: #0f172a; color: #ffffff; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; }
+  .container { max-width: 680px; margin: 0 auto; padding: 16px; }
+  .btn-primary { background: #1a2b5f; color: #fff; border: none; min-height: 48px; padding: 0 18px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; width: 100%; margin-bottom: 16px; }
+  .card { background: #fff; border: 1.5px solid #cbd5e1; border-left: 6px solid #10b981; border-radius: 10px; padding: 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .time { font-size: 16px; font-weight: 800; color: #0f172a; }
+  .info { font-size: 14px; color: #334155; margin-top: 4px; }
+  .btn-wa { background: #25D366; color: #fff; text-decoration: none; min-height: 48px; padding: 0 14px; border-radius: 8px; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+  .footer { position: fixed; bottom: 0; left: 0; right: 0; background: #1e293b; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; }
+  .modal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.7); align-items: center; justify-content: center; padding: 16px; }
+  .modal.active { display: flex; }
+  .modal-card { background: #fff; width: 100%; max-width: 420px; border-radius: 14px; padding: 20px; }
+  .modal-card h3 { margin-bottom: 14px; color: #1a2b5f; }
+  .modal-card label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .modal-card input, .modal-card select { width: 100%; height: 46px; border: 2px solid #cbd5e1; border-radius: 8px; padding: 0 10px; margin-bottom: 12px; font-size: 14px; }
+  .alert { background: #fee2e2; color: #991b1b; border: 2px solid #ef4444; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 700; margin-bottom: 12px; display: none; }
+</style>
+</head>
+<body>
+  <div class="top-nav">
+    <div class="brand">✂️ Brilho de Cristal</div>
+    <span style="font-size:13px;">Gestora: Maria</span>
+  </div>
+  <div class="date-bar">
+    <span>Data: {{ data }}</span>
+    <span>Grade Diária</span>
+  </div>
+  <div class="container">
+    <button class="btn-primary" onclick="document.getElementById('modal').classList.add('active')">+ Novo Agendamento</button>
+    {% if agendamentos|length == 0 %}
+      <p style="text-align:center; color:#64748b; padding: 30px 0;">Nenhum agendamento cadastrado para esta data. Clique acima para começar!</p>
+    {% endif %}
+    {% for ag in agendamentos %}
+      <div class="card">
+        <div>
+          <div class="time">{{ ag.horario_inicio }} <span style="font-size:11px; background:#d1fae5; color:#065f46; padding:2px 6px; border-radius:4px;">{{ ag.status }}</span></div>
+          <div class="info"><strong>{{ ag.cliente.nome }}</strong> • {{ ag.servico_nome }} (R$ {{ "%.2f"|format(ag.valor_servico) }})</div>
+        </div>
+        <a class="btn-wa" target="_blank" href="https://wa.me/55{{ ag.cliente.telefone }}?text=Oi%20{{ ag.cliente.nome }},%20tudo%20bem?%20Passando%20pra%20confirmar%20seu%20hor%C3%A1rio%20de%20{{ ag.servico_nome }}%20aqui%20no%20Sal%C3%A3o%20Brilho%20de%20Cristal!">💬 WhatsApp</a>
+      </div>
+    {% endfor %}
+  </div>
+  <div class="footer">
+    <span>Atendimentos: {{ agendamentos|length }}</span>
+    <span>Faturamento: R$ {{ "%.2f"|format(total) }}</span>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-card">
+      <h3>Novo Agendamento</h3>
+      <div id="alerta" class="alert"></div>
+      <label>Nome da Cliente</label>
+      <input type="text" id="nome" placeholder="Ex: Carla Souza">
+      <label>WhatsApp</label>
+      <input type="text" id="tel" placeholder="(11) 99999-9999" oninput="mascaraTel(this)">
+      <label>Horário</label>
+      <select id="hora">
+        <option value="09:00">09:00</option>
+        <option value="10:30">10:30</option>
+        <option value="14:00">14:00</option>
+        <option value="15:30">15:30</option>
+        <option value="17:00">17:00</option>
+      </select>
+      <label>Serviço</label>
+      <select id="servico">
+        <option value="Corte">Corte (30 min) - R$ 50</option>
+        <option value="Escova">Escova (40 min) - R$ 60</option>
+        <option value="Manicure">Manicure (45 min) - R$ 40</option>
+        <option value="Luzes">Luzes (2h30) - R$ 180</option>
+      </select>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-primary" style="background:#cbd5e1; color:#1e293b;" onclick="document.getElementById('modal').classList.remove('active')">Cancelar</button>
+        <button class="btn-primary" onclick="salvar()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function mascaraTel(i) {
+      let v = i.value.replace(/\D/g, '').slice(0, 11);
+      v = v.replace(/^(\d{2})(\d)/g, '() ');
+      v = v.replace(/(\d)(\d{4})$/, '-');
+      i.value = v;
+    }
+    async function salvar() {
+      const servSel = document.getElementById('servico').value;
+      const precos = { 'Corte': 50, 'Escova': 60, 'Manicure': 40, 'Luzes': 180 };
+      const res = await fetch('/api/agendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: document.getElementById('nome').value,
+          telefone: document.getElementById('tel').value,
+          data_atendimento: '{{ data }}',
+          horario_inicio: document.getElementById('hora').value,
+          servico_nome: servSel,
+          valor_servico: precos[servSel]
+        })
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        const a = document.getElementById('alerta');
+        a.innerText = '⚠️ ' + json.mensagem;
+        a.style.display = 'block';
+      } else {
+        window.location.reload();
+      }
+    }
+  </script>
+</body>
+</html>
